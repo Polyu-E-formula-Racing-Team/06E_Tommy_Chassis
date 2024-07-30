@@ -1,0 +1,129 @@
+﻿DRIVER
+  os.environ['SMA_TSO_COSMOS_ELEMAT'] = '1'
+  driver.registerSaveRule( UpdateRules.COPY, CheckPoints.ITER_COMPLETE, EventTimes.LAST, [ '*.ste*' ], 'SAVE.ste', '' )
+  driver.registerSaveRule( UpdateRules.COPY, CheckPoints.ITER_COMPLETE, EventTimes.LAST, [ '*.lcd*' ], 'SAVE.ste', '' )
+  driver.registerSaveRule( UpdateRules.COPY, CheckPoints.ITER_COMPLETE, EventTimes.LAST, [ '*.lcm*' ], 'SAVE.ste', '' )
+END_
+
+FEM_INPUT
+  ID_NAME = 06E.VD.SU.FSus_Bell_Crank_04-03-拓扑算例_1_1
+  FILE = 06E.VD.SU.FSus_Bell_Crank_04-03-拓扑算例 1.NOD
+END_
+
+*SET_DB,rint,130,1
+
+! ----------------------------------------------------------------
+!
+! Design Response: Stiffness_Measure
+!
+DRESP
+  ID_NAME = Stiffness_Measure
+  LIST = NO_LIST
+  DEF_TYPE = SYSTEM
+  EL_GROUP = ALL_ELEMENTS
+  TYPE = ENERGY_STIFF_MEASURE
+  GROUP_OPER = SUM
+  LC_SEL = SUM 
+  LC_SET = STATIC, ALL, ALL, MAX
+END_
+
+! ----------------------------------------------------------------
+!
+! Design Response: Mass_DResp_1
+!
+DRESP
+  ID_NAME = Mass_DResp_1
+  LIST = NO_LIST
+  DEF_TYPE = SYSTEM
+  EL_GROUP = ALL_ELEMENTS
+  TYPE = WEIGHT
+  GROUP_OPER = SUM
+END_
+
+! ----------------------------------------------------------------
+!
+! Design Response: Stress_DResp_1
+!
+DRESP
+  ID_NAME = Stress_DResp_1
+  LIST = NO_LIST
+  DEF_TYPE = SYSTEM
+  EL_GROUP = ALL_ELEMENTS
+  TYPE = SIG_TOPO_MISES
+  GROUP_OPER = MAX
+  LC_SET = STATIC, 1, ALL, MAX
+END_
+
+! ----------------------------------------------------------------
+!
+!
+! Design Area: Task1_DESIGN_AREA
+!
+DV_TOPO
+  ID_NAME = Task1_DESIGN_AREA
+  EL_GROUP = ALL_ELEMENTS
+END_
+
+! ----------------------------------------------------------------
+!
+! Objective Function: StiffnessEnergy_Obj_Func
+!
+OBJ_FUNC
+  ID_NAME = StiffnessEnergy_Obj_Func
+  DRESP = Stiffness_Measure, 1.0
+  TARGET = MIN
+END_
+
+! ----------------------------------------------------------------
+!
+! Constraint: Mass_Constraint_1
+!
+CONSTRAINT
+  ID_NAME = Mass_Constraint_1
+  DRESP = Mass_DResp_1
+  MAGNITUDE = REL
+  LE_VALUE = 0.5
+END_
+
+! ----------------------------------------------------------------
+!
+! Constraint: Stress_Constraint_FOS_2
+!
+CONSTRAINT
+  ID_NAME = Stress_Constraint_FOS_2
+  DRESP = Stress_DResp_1
+  MAGNITUDE = ABS
+  LE_VALUE = 3.36667e+08
+END_
+
+! ----------------------------------------------------------------
+!
+!
+! Optimize: OPTIMIZE_1_TOPOLOGY_OPTIMIZATION_CONTROLLER 
+!
+OPTIMIZE
+  ID_NAME = OPTIMIZE_1_TOPOLOGY_OPTIMIZATION_SENSITIVITY
+  DV = Task1_DESIGN_AREA
+  OBJ_FUNC = StiffnessEnergy_Obj_Func
+  CONSTRAINT = Mass_Constraint_1
+  CONSTRAINT = Stress_Constraint_FOS_2
+  STRATEGY = TOPO_SENSITIVITY
+END_
+
+OPT_PARAM
+  ID_NAME = OPTIMIZE_1_TOPOLOGY_OPTIMIZATION_SENSITIVITY_OPT_PARAM_
+  OPTIMIZE = OPTIMIZE_1_TOPOLOGY_OPTIMIZATION_SENSITIVITY
+  DV_UPDATE_STRATEGY = CSA
+  STABILIZATION = YES
+  AUTO_FROZEN = BOTH
+  AUTO_FROZEN_CON = BOTH
+  STOP_CRITERION_LEVEL = BOTH
+  STOP_CRITERION_OBJ = 0.001
+  STOP_CRITERION_DENSITY = 0.005
+END_
+
+STOP
+  ID_NAME = Task-1_GLOBAL_STOP_CONDITION_
+  ITER_MAX = 75
+END_
+
